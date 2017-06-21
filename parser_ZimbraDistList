@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+
+use strict;
+use Net::LDAP::LDIF;
+use Data::Dumper;
+use utf8;
+use open OUT => ':utf8';
+
+my $file=$ARGV[0];
+#my @attr=qw(cn sn givenName displayName telephoneNumber zimbraNotes userPassword zimbraMailQuota co ou company physicalDeliveryOfficeName);
+my @attr=qw(displayName);
+
+my $ldif = Net::LDAP::LDIF->new($file, "r", onerror => 'undef');
+
+#print Dumper($entry);
+
+while (not $ldif->eof()){
+   my $entry = $ldif->read_entry ();
+   if ($entry->{attrs}{objectclass}[0] eq 'zimbraDistributionList'){
+      print "cdl $entry->{attrs}{mail}[0] ";
+      print "\n";
+      print "mdl $entry->{attrs}{mail}[0] displayName '$entry->{attrs}{displayname}[0]' ";
+      print "\n";
+
+      if(grep(/zimbraDistributionList/, @{$entry->{attrs}{objectclass}})){
+         my $members = "";
+         if(ref($entry->{attrs}{zimbramailforwardingaddress}) eq 'ARRAY'){
+             $members = join(" ", @{$entry->{attrs}{zimbramailforwardingaddress}});
+         }
+         print "adlm $entry->{attrs}{mail}[0] $members";
+      print "\n\n";
+
+   }
+ }
+
+}
